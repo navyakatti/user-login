@@ -1,0 +1,92 @@
+<!-- views/register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <title>User Login</title>
+
+    <style>
+        body{
+            padding: 0px;
+            margin: 0px;
+        }
+        .about-bg{
+        background: #3f3f3f;
+      height: 100vh;
+      width: 100%;
+      }
+      .middle-center{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .user-middle{
+        background: #fff;
+        width: 560px;
+        height: 400px;
+        padding: 20px;
+      }
+      .user-middle input{
+        width: 100%;
+        height: 35px;
+        margin-bottom: 15px;
+      }
+      .password-input {
+        position: relative;
+      }
+      .fas-before .fas{
+        position: absolute;
+        right: 4px;
+        top: 13px;
+      }
+      .submit-btn{
+        background: #5480e7;
+        padding: 10px 20px 10px 20px;
+        text-align: center;
+        color: #fff;
+        border: 0px;
+      }
+
+    </style>
+</head>
+<body>
+    <div class="about-bg">
+        <div class="middle-center">
+            <div class="user-middle">
+                <h1>User Login</h1>
+                <form action="/login" method="POST">
+                  <input type="email" name="gmail" placeholder="Username " required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}">
+                    <div class="password-input">
+                        <div class="fas-before">
+                            <input type="password" name="password" id="password" placeholder="Password" required>
+                            <i class="fas fa-eye" id="togglePassword"></i>
+                        </div>
+                       
+                    </div>
+                    
+                    <button class="submit-btn" type="submit">Login</button>
+                </form>
+            </div>
+           
+        </div>
+    </div>
+   
+   
+    
+</body>
+</html>
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+
+    togglePassword.addEventListener('click', function() {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.classList.toggle('fa-eye-slash');
+    });
+</script>
+

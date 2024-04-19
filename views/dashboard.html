@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .note-form {
+            display: none;
+            /* Initially hide the form */
+            margin-top: 20px;
+        }
+
+        .plus-icon {
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome</h1>
+        <div class="note-form" id="noteForm">
+            <h2>Note</h2>
+            <form id="noteFormElement"> <!-- Added ID to the form element -->
+                <input type="hidden" id="noteId" name="noteId"> <!-- Hidden input for noteId -->
+                <div class="form-group">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Content:</label>
+                    <textarea id="content" name="content" rows="4" required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="updateNoteBtn" style="display: none;">Update Note</button>
+                    <button type="submit" id="saveNoteBtn">Save Note</button>
+                    <button type="button" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Plus icon to toggle the form -->
+        <div class="plus-icon" id="plusIcon">+</div>
+
+        <table id="notesTable">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="notesBody">
+                <!-- Notes will be displayed here dynamically -->
+            </tbody>
+        </table>
+        <a href="/logout" id="logoutLink">Logout</a> <!-- Example logout link -->
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const noteForm = $('#noteForm');
+            const plusIcon = $('#plusIcon');
+            const logoutLink = $('#logoutLink');
+            const notesTable = $('#notesTable'); // Added notesTable selector
+
+            plusIcon.click(function () {
+                noteForm.toggle(); // Toggle the form
+                plusIcon.hide(); // Hide the plus icon
+                logoutLink.hide(); // Hide the logout link
+                notesTable.hide(); // Hide the table
+                $('#updateNoteBtn').hide();
+                $('#saveNoteBtn').show();
+
+                // Enable and focus the required fields when form is displayed
+                $('#title, #content').prop('disabled', false).focus();
+            });
+
+            $('#cancelBtn').click(function () {
+                noteForm.hide(); // Hide the form on cancel
+                plusIcon.show(); // Show the plus icon on cancel
+                logoutLink.show(); // Show the logout link on cancel
+                notesTable.show(); // Show the table on cancel
+
+                // Clear the form fields
+                $('#title, #content').val('');
+            });
+
+            $('#saveNoteBtn').click(function () {
+                const formElement = document.getElementById('noteFormElement');
+                if (formElement.checkValidity()) {
+                    formElement.submit(); // Submit the form if valid
+                } else {
+                    alert('Please fill in all required fields.'); // Show error if form is invalid
+                }
+            });
+
+
+            $('#notesBody').on('click', '.editBtn', function () {
+                const row = $(this).closest('tr');
+                const noteId = row.data('noteId');
+                const title = row.find('.title').text();
+                const content = row.find('.content').text();
+
+                $('#noteId').val(noteId);
+                $('#title').val(title);
+                $('#content').val(content);
+
+                // Show the Update Note button and hide Save Note button
+                $('#updateNoteBtn').show();
+                $('#saveNoteBtn').hide();
+
+                noteForm.show();
+                notesTable.hide();
+                plusIcon.hide();
+                logoutLink.hide();
+            });
+
+        });
+
+
+        // JavaScript code for handling form submission and AJAX requests
+        const noteForm = document.getElementById('noteForm');
+        const notesTable = document.getElementById('notesTable');
+        const notesBody = document.getElementById('notesBody');
+        const plusIcon = document.getElementById('plusIcon');
+
+        noteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = {
+                userId: 'user_id_value', // Replace with your actual user ID value
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value
+            };
+
+            const response = await fetch('/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                // Reload notes after saving
+                loadNotes();
+                noteForm.style.display = 'none'; // Hide the form after submission
+                noteForm.reset(); // Reset the form fields
+            } else {
+                alert('Failed to save note');
+            }
+        });
+
+        // Function to load notes from the server
+        async function loadNotes() {
+            const response = await fetch('/notes'); // Assuming you have an endpoint to get all notes
+            if (response.ok) {
+                const notes = await response.json();
+                displayNotes(notes);
+            } else {
+                alert('Failed to fetch notes');
+            }
+        }
+
+        // Function to display notes in the HTML table
+        function displayNotes(notes) {
+            const tbody = document.getElementById('notesBody');
+            tbody.innerHTML = ''; // Clear previous notes
+
+            notes.forEach(note => {
+                const row = document.createElement('tr');
+
+                // Create cells for title, content, and action buttons
+                const titleCell = document.createElement('td');
+                titleCell.textContent = note.title;
+
+                const contentCell = document.createElement('td');
+                contentCell.textContent = note.content;
+
+                const actionCell = document.createElement('td');
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.addEventListener('click', () => editNote(note._id, note.title, note.content));
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.addEventListener('click', () => deleteNote(note._id));
+
+                actionCell.appendChild(editButton);
+                actionCell.appendChild(deleteButton);
+
+                row.appendChild(titleCell);
+                row.appendChild(contentCell);
+                row.appendChild(actionCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+
+
+        $('#updateNoteBtn').click(async function () {
+            const noteId = $('#noteId').val(); // Retrieve the noteId from the form
+            const formData = {
+                title: $('#title').val(),
+                content: $('#content').val()
+            };
+
+            const response = await fetch(`/notes/${noteId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            console.log(response,'res')
+
+            if (response.ok) {
+                console.log(response,'resd')
+                loadNotes(); // Reload notes after updating
+
+                // Reset form and show Save Note button again
+                // noteForm.reset();
+                $('#updateNoteBtn').hide();
+                $('#saveNoteBtn').show();
+                $('#noteForm').hide();
+                $('#plusIcon').show();
+                $('logoutLink').show();
+                $('#notesTable').show();
+                $('#title, #content').val('');
+            } else {
+                alert('Failed to update note');
+            }
+        });
+
+
+        async function editNote(noteId, title, content) {
+            console.log(noteId, 'editnoteid')
+            // Set the values in the form
+            $('#noteId').val(noteId);
+            $('#title').val(title);
+            $('#content').val(content);
+
+            // Show the form using jQuery selector directly
+            $('#noteForm').css('display', 'block');
+            // Hide the table
+            $('#notesTable').hide();
+            // Hide the Plus icon
+            $('#plusIcon').hide();
+            $('#logoutLink').hide();
+            $('#updateNoteBtn').show();
+            $('#saveNoteBtn').hide();
+        }
+
+
+        // Function to delete a note
+        async function deleteNote(noteId) {
+            const confirmDelete = confirm('Are you sure you want to delete this note?');
+            if (confirmDelete) {
+                const response = await fetch(`/notes/${noteId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Reload notes after deletion
+                    loadNotes();
+                } else {
+                    alert('Failed to delete note');
+                }
+            }
+        }
+
+        // Initial load of notes when the page loads
+        loadNotes();
+    </script>
+</body>
+
+</html>
